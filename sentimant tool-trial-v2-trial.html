@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Conversation Sentiment Analyzer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .keyword-tally {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="container mx-auto p-6">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <h1 class="text-4xl font-bold text-center mb-6">Enhanced Conversation Sentiment Analyzer</h1>
+            
+            <!-- Input Textarea -->
+            <div class="mb-6">
+                <label for="input" class="block text-lg font-semibold mb-2">Enter Conversation Text:</label>
+                <textarea id="input" rows="6" class="w-full p-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Paste your conversation here..."></textarea>
+            </div>
+            
+            <!-- Keyword Inputs -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <!-- Positive Keywords -->
+                <div>
+                    <label for="PositiveKeywords" class="block text-lg font-semibold mb-2">Positive Keywords:</label>
+                    <input type="text" id="PositiveKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400" value="good, great, excellent, amazing, wonderful, fantastic, superior, helpful, friendly, courteous, knowledgeable, professional, efficient, timely, accurate, correct, precise, recommend, satisfied">
+                </div>
+                <!-- Negative Keywords -->
+                <div>
+                    <label for="NegativeKeywords" class="block text-lg font-semibold mb-2">Negative Keywords:</label>
+                    <input type="text" id="NegativeKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400" value="disappointed, refund, not, can't, unhappy, terrible, bad, poor, unsatisfied, dissatisfied, frustrated, angry, upset, complaint, issue, problem, defective, faulty, broken, wrong, late, delay, return, exchange">
+                </div>
+                <!-- Confused Keywords -->
+                <div>
+                    <label for="ConfusedKeywords" class="block text-lg font-semibold mb-2">Confused Keywords:</label>
+                    <input type="text" id="ConfusedKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400" value="confused, uncertain, indecisive, puzzled, perplexed, baffled, unclear, vague, ambiguous, hesitant, unsure">
+                </div>
+                <!-- Excited Keywords -->
+                <div>
+                    <label for="ExcitedKeywords" class="block text-lg font-semibold mb-2">Excited Keywords:</label>
+                    <input type="text" id="ExcitedKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400" value="excited, eager, enthusiastic, thrilled, delighted, animated, passionate, exhilarated, pumped, energized, keen, joyful, lively, spirited">
+                </div>
+                <!-- Neutral Keywords -->
+                <div>
+                    <label for="NeutralKeywords" class="block text-lg font-semibold mb-2">Neutral Keywords:</label>
+                    <input type="text" id="NeutralKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400" value="neutral, indifferent, unconcerned, apathetic, impartial, balanced, unbiased, detached, reserved, unemotional, unenthusiastic, nonchalant">
+                </div>
+                <!-- Angry Keywords -->
+                <div>
+                    <label for="AngryKeywords" class="block text-lg font-semibold mb-2">Angry Keywords:</label>
+                    <input type="text" id="AngryKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-400" value="angry, mad, furious, enraged, infuriated, irate, livid, outraged, annoyed, irritated, resentful, wrathful, exasperated, incensed">
+                </div>
+                <!-- Sad Keywords -->
+                <div>
+                    <label for="SadKeywords" class="block text-lg font-semibold mb-2">Sad Keywords:</label>
+                    <input type="text" id="SadKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400" value="sad, depressed, unhappy, miserable, heartbroken, downcast, sorrowful, gloomy, melancholic, despondent, forlorn, dejected, disheartened, blue">
+                </div>
+                <!-- Fearful Keywords -->
+                <div>
+                    <label for="FearfulKeywords" class="block text-lg font-semibold mb-2">Fearful Keywords:</label>
+                    <input type="text" id="FearfulKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" value="fearful, afraid, scared, terrified, anxious, panicked, worried, uneasy, jittery, apprehensive, alarmed, petrified, tense">
+                </div>
+                <!-- Surprised Keywords -->
+                <div>
+                    <label for="SurprisedKeywords" class="block text-lg font-semibold mb-2">Surprised Keywords:</label>
+                    <input type="text" id="SurprisedKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400" value="surprised, astonished, amazed, stunned, flabbergasted, shocked, bewildered, staggered, thunderstruck, gobsmacked, awestruck, startled">
+                </div>
+                <!-- Disgusted Keywords -->
+                <div>
+                    <label for="DisgustedKeywords" class="block text-lg font-semibold mb-2">Disgusted Keywords:</label>
+                    <input type="text" id="DisgustedKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-400" value="disgusted, repulsed, revolted, nauseated, appalled, offended, sickened, horrified, detested, abhorred, loathed, disdainful, contemptuous">
+                </div>
+                <!-- Trustful Keywords -->
+                <div>
+                    <label for="TrustfulKeywords" class="block text-lg font-semibold mb-2">Trustful Keywords:</label>
+                    <input type="text" id="TrustfulKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-700" value="trustful, confident, assured, reliant, dependable, faithful, secure, convinced, certain, optimistic, positive, steadfast">
+                </div>
+                <!-- Anticipative Keywords -->
+                <div>
+                    <label for="AnticipativeKeywords" class="block text-lg font-semibold mb-2">Anticipative Keywords:</label>
+                    <input type="text" id="AnticipativeKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-700" value="anticipative, hopeful, expectant, awaiting, looking forward, eager, enthusiastic, keen, positive">
+                </div>
+                <!-- Bored Keywords -->
+                <div>
+                    <label for="BoredKeywords" class="block text-lg font-semibold mb-2">Bored Keywords:</label>
+                    <input type="text" id="BoredKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-700" value="bored, uninterested, weary, restless, apathetic, dull, monotonous, tedious, lackluster, unengaged, listless, languid, blasé">
+                </div>
+                <!-- Proud Keywords -->
+                <div>
+                    <label for="ProudKeywords" class="block text-lg font-semibold mb-2">Proud Keywords:</label>
+                    <input type="text" id="ProudKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-700" value="proud, satisfied, pleased, content, honored, gratified, fulfilled, triumphant, delighted, happy, joyful, exultant, gleeful">
+                </div>
+                <!-- Hopeful Keywords -->
+                <div>
+                    <label for="HopefulKeywords" class="block text-lg font-semibold mb-2">Hopeful Keywords:</label>
+                    <input type="text" id="HopefulKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-700" value="hopeful, optimistic, positive, confident, buoyant, expectant, encouraged, sanguine, bright, promising, aspiring, idealistic">
+                </div>
+                <!-- Lonely Keywords -->
+                <div>
+                    <label for="LonelyKeywords" class="block text-lg font-semibold mb-2">Lonely Keywords:</label>
+                    <input type="text" id="LonelyKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-800" value="lonely, isolated, solitary, alone, abandoned, forlorn, desolate, disconnected, estranged, secluded, alienated, deserted">
+                </div>
+                <!-- Relieved Keywords -->
+                <div>
+                    <label for="RelievedKeywords" class="block text-lg font-semibold mb-2">Relieved Keywords:</label>
+                    <input type="text" id="RelievedKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-800" value="relieved, comforted, reassured, eased, soothed, calmed, alleviated, pacified, tranquil, serene, satisfied, contented">
+                </div>
+                <!-- Frustrated Keywords -->
+                <div>
+                    <label for="FrustratedKeywords" class="block text-lg font-semibold mb-2">Frustrated Keywords:</label>
+                    <input type="text" id="FrustratedKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-700" value="frustrated, annoyed, irritated, exasperated, thwarted, hindered, blocked, stymied, discouraged, upset, vexed, disheartened">
+                </div>
+                <!-- Enthralled Keywords -->
+                <div>
+                    <label for="EnthralledKeywords" class="block text-lg font-semibold mb-2">Enthralled Keywords:</label>
+                    <input type="text" id="EnthralledKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-700" value="enthralled, captivated, mesmerized, fascinated, enchanted, spellbound, engrossed, absorbed, delighted, charmed, bewitched">
+                </div>
+                <!-- Embarrassed Keywords -->
+                <div>
+                    <label for="EmbarrassedKeywords" class="block text-lg font-semibold mb-2">Embarrassed Keywords:</label>
+                    <input type="text" id="EmbarrassedKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-700" value="embarrassed, ashamed, humiliated, mortified, self-conscious, awkward, uncomfortable, uneasy, abashed, flustered, sheepish">
+                </div>
+                <!-- Indignant Keywords -->
+                <div>
+                    <label for="IndignantKeywords" class="block text-lg font-semibold mb-2">Indignant Keywords:</label>
+                    <input type="text" id="IndignantKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-800" value="indignant, outraged, offended, affronted, resentful, irritated, aggrieved, incensed, exasperated, peeved, disgruntled">
+                </div>
+                <!-- Content Keywords -->
+                <div>
+                    <label for="ContentKeywords" class="block text-lg font-semibold mb-2">Content Keywords:</label>
+                    <input type="text" id="ContentKeywords" class="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-700" value="content, satisfied, pleased, happy, serene, tranquil, fulfilled, comfortable, gratified, at ease, peaceful, mellow">
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-4 justify-center mb-6">
+                <button id="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition transform hover:scale-105">Submit</button>
+                <button id="reset" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition transform hover:scale-105">Reset</button>
+                <button id="clearInput" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition transform hover:scale-105">Clear Input</button>
+                <button id="saveConfig" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition transform hover:scale-105">Save Config</button>
+                <button id="loadConfig" class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition transform hover:scale-105">Load Config</button>
+            </div>
+            
+            <!-- Output Section -->
+            <div id="output" class="mt-6"></div>
+            
+            <!-- Statistics and Visualization -->
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Statistics -->
+                <div class="bg-gray-50 rounded-lg shadow p-4">
+                    <h2 class="text-xl font-semibold mb-4">Statistics</h2>
+                    <ul class="space-y-2">
+                        <li><span class="font-medium">Word Count:</span> <span id="wordCount">0</span></li>
+                        <li><span class="font-medium">Character Count:</span> <span id="charCount">0</span></li>
+                        <li><span class="font-medium">Sentiment Score:</span> <span id="sentimentScore">0</span></li>
+                    </ul>
+                </div>
+                
+                <!-- Sentiment Visualization -->
+                <div class="bg-gray-50 rounded-lg shadow p-4">
+                    <h2 class="text-xl font-semibold mb-4">Sentiment Visualization</h2>
+                    <canvas id="sentimentChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Keyword Tally -->
+            <div class="mt-6 bg-gray-50 rounded-lg shadow p-4">
+                <h2 class="text-xl font-semibold mb-4">Keyword Tally</h2>
+                <div class="keyword-tally">
+                    <!-- Dynamically Generated Tally Lists -->
+                    <!-- The JavaScript will populate these based on categories -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sentimentChart;
+
+        // Define all sentiment categories and their keywords
+        const sentimentCategories = {
+            Positive: "good, great, excellent, amazing, wonderful, fantastic, superior, helpful, friendly, courteous, knowledgeable, professional, efficient, timely, accurate, correct, precise, recommend, satisfied",
+            Negative: "disappointed, refund, not, can't, unhappy, terrible, bad, poor, unsatisfied, dissatisfied, frustrated, angry, upset, complaint, issue, problem, defective, faulty, broken, wrong, late, delay, return, exchange",
+            Confused: "confused, uncertain, indecisive, puzzled, perplexed, baffled, unclear, vague, ambiguous, hesitant, unsure",
+            Excited: "excited, eager, enthusiastic, thrilled, delighted, animated, passionate, exhilarated, pumped, energized, keen, joyful, lively, spirited",
+            Neutral: "neutral, indifferent, unconcerned, apathetic, impartial, balanced, unbiased, detached, reserved, unemotional, unenthusiastic, nonchalant",
+            Angry: "angry, mad, furious, enraged, infuriated, irate, livid, outraged, annoyed, irritated, resentful, wrathful, exasperated, incensed",
+            Sad: "sad, depressed, unhappy, miserable, heartbroken, downcast, sorrowful, gloomy, melancholic, despondent, forlorn, dejected, disheartened, blue",
+            Fearful: "fearful, afraid, scared, terrified, anxious, panicked, worried, uneasy, jittery, apprehensive, alarmed, petrified, tense",
+            Surprised: "surprised, astonished, amazed, stunned, flabbergasted, shocked, bewildered, staggered, thunderstruck, gobsmacked, awestruck, startled",
+            Disgusted: "disgusted, repulsed, revolted, nauseated, appalled, offended, sickened, horrified, detested, abhorred, loathed, disdainful, contemptuous",
+            Trustful: "trustful, confident, assured, reliant, dependable, faithful, secure, convinced, certain, optimistic, positive, steadfast",
+            Anticipative: "anticipative, hopeful, expectant, awaiting, looking forward, eager, enthusiastic, keen, positive",
+            Bored: "bored, uninterested, weary, restless, apathetic, dull, monotonous, tedious, lackluster, unengaged, listless, languid, blasé",
+            Proud: "proud, satisfied, pleased, content, honored, gratified, fulfilled, triumphant, delighted, happy, joyful, exultant, gleeful",
+            Hopeful: "hopeful, optimistic, positive, confident, buoyant, expectant, encouraged, sanguine, bright, promising, aspiring, idealistic",
+            Lonely: "lonely, isolated, solitary, alone, abandoned, forlorn, desolate, disconnected, estranged, secluded, alienated, deserted",
+            Relieved: "relieved, comforted, reassured, eased, soothed, calmed, alleviated, pacified, tranquil, serene, satisfied, contented",
+            Frustrated: "frustrated, annoyed, irritated, exasperated, thwarted, hindered, blocked, stymied, discouraged, upset, vexed, disheartened",
+            Enthralled: "enthralled, captivated, mesmerized, fascinated, enchanted, spellbound, engrossed, absorbed, delighted, charmed, bewitched",
+            Embarrassed: "embarrassed, ashamed, humiliated, mortified, self-conscious, awkward, uncomfortable, uneasy, abashed, flustered, sheepish",
+            Indignant: "indignant, outraged, offended, affronted, resentful, irritated, aggrieved, incensed, exasperated, peeved, disgruntled",
+            Content: "content, satisfied, pleased, happy, serene, tranquil, fulfilled, comfortable, gratified, at ease, peaceful, mellow"
+        };
+
+        // Function to dynamically create tally sections based on categories
+        function createTallySections() {
+            const tallyContainer = document.querySelector('.keyword-tally');
+            tallyContainer.innerHTML = ''; // Clear existing content
+
+            for (const category in sentimentCategories) {
+                const div = document.createElement('div');
+                div.id = `${category.toLowerCase()}Tally`;
+                div.classList.add('mb-4');
+
+                const h3 = document.createElement('h3');
+                h3.classList.add('font-semibold');
+                // Assign text color based on category
+                h3.classList.add(getCategoryColor(category));
+                h3.textContent = `${category} Keywords:`;
+
+                const ul = document.createElement('ul');
+                ul.id = `${category.toLowerCase()}TallyList`;
+                ul.classList.add('list-disc', 'list-inside');
+
+                div.appendChild(h3);
+                div.appendChild(ul);
+                tallyContainer.appendChild(div);
+            }
+        }
+
+        // Initialize tally sections on page load
+        createTallySections();
+
+        function analyzeText() {
+            const input = document.getElementById('input').value;
+            const words = input.split(/\s+/).filter(word => word.length > 0);
+            const outputElement = document.getElementById('output');
+            outputElement.innerHTML = '';
+            
+            let wordCount = words.length;
+            let charCount = input.length;
+            let sentimentScore = 0;
+            
+            // Initialize counts for each category
+            let sentimentCounts = {};
+            let sentimentTally = {};
+            for (const category in sentimentCategories) {
+                sentimentCounts[category] = 0;
+                sentimentTally[category] = {};
+            }
+            
+            // Preprocess keywords
+            let categoryKeywords = {};
+            for (const category in sentimentCategories) {
+                categoryKeywords[category] = sentimentCategories[category].toLowerCase().split(',').map(word => word.trim());
+            }
+            
+            words.forEach(word => {
+                let cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase();
+                let span = document.createElement('span');
+                span.textContent = word + ' ';
+                
+                let matched = false;
+                for (const category in categoryKeywords) {
+                    if (categoryKeywords[category].includes(cleanWord)) {
+                        // Assign color based on category
+                        let colorClass = getCategoryColor(category);
+                        if (colorClass) {
+                            span.classList.add(colorClass, 'font-semibold');
+                        }
+                        sentimentCounts[category]++;
+                        sentimentScore += getSentimentScore(category);
+                        sentimentTally[category][cleanWord] = (sentimentTally[category][cleanWord] || 0) + 1;
+                        matched = true;
+                        break; // Assign to first matching category
+                    }
+                }
+                
+                outputElement.appendChild(span);
+            });
+            
+            // Update statistics
+            document.getElementById('wordCount').textContent = wordCount;
+            document.getElementById('charCount').textContent = charCount;
+            document.getElementById('sentimentScore').textContent = sentimentScore.toFixed(2);
+            
+            // Update tally lists
+            for (const category in sentimentTally) {
+                const listId = `${category.toLowerCase()}TallyList`;
+                updateTallyList(listId, sentimentTally[category]);
+            }
+            
+            // Update sentiment chart
+            updateSentimentChart(sentimentCounts);
+        }
+
+        function getCategoryColor(category) {
+            const colorMapping = {
+                Positive: 'text-green-600',
+                Negative: 'text-red-600',
+                Confused: 'text-yellow-600',
+                Excited: 'text-orange-600',
+                Neutral: 'text-gray-600',
+                Angry: 'text-purple-600',
+                Sad: 'text-blue-600',
+                Fearful: 'text-indigo-600',
+                Surprised: 'text-pink-600',
+                Disgusted: 'text-teal-600',
+                Trustful: 'text-green-700',
+                Anticipative: 'text-blue-700',
+                Bored: 'text-gray-700',
+                Proud: 'text-indigo-700',
+                Hopeful: 'text-teal-700',
+                Lonely: 'text-blue-800',
+                Relieved: 'text-green-800',
+                Frustrated: 'text-red-700',
+                Enthralled: 'text-purple-700',
+                Embarrassed: 'text-pink-700',
+                Indignant: 'text-red-800',
+                Content: 'text-yellow-700'
+            };
+            return colorMapping[category] || 'text-black';
+        }
+
+        function getSentimentScore(category) {
+            const scoreMapping = {
+                Positive: 1,
+                Negative: -1,
+                Confused: -0.2,
+                Excited: 1,
+                Neutral: 0,
+                Angry: -1,
+                Sad: -1,
+                Fearful: -0.8,
+                Surprised: 0.5,
+                Disgusted: -0.7,
+                Trustful: 1,
+                Anticipative: 0.8,
+                Bored: -0.3,
+                Proud: 1,
+                Hopeful: 0.9,
+                Lonely: -0.5,
+                Relieved: 0.7,
+                Frustrated: -0.6,
+                Enthralled: 0.8,
+                Embarrassed: -0.4,
+                Indignant: -0.7,
+                Content: 0.6
+            };
+            return scoreMapping[category] || 0;
+        }
+
+        function updateTallyList(listId, tally) {
+            const tallyList = document.getElementById(listId);
+            tallyList.innerHTML = '';
+            for (const [word, count] of Object.entries(tally)) {
+                if (count > 0) {
+                    const li = document.createElement('li');
+                    li.textContent = `${word}: ${count}`;
+                    tallyList.appendChild(li);
+                }
+            }
+        }
+
+        function updateSentimentChart(sentimentCounts) {
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+            
+            if (sentimentChart) {
+                sentimentChart.destroy();
+            }
+            
+            const labels = Object.keys(sentimentCounts);
+            const data = Object.values(sentimentCounts);
+            const backgroundColors = labels.map(label => getColorForChart(label));
+            
+            sentimentChart = new Chart(ctx, {
+                type: 'pie', // Changed to pie for multiple categories
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Sentiment Distribution'
+                        }
+                    }
+                }
+            });
+        }
+
+        function getColorForChart(category) {
+            const colorMapping = {
+                Positive: '#10B981',      // Green-500
+                Negative: '#EF4444',      // Red-500
+                Confused: '#F59E0B',      // Yellow-500
+                Excited: '#F97316',       // Orange-500
+                Neutral: '#6B7280',       // Gray-500
+                Angry: '#8B5CF6',         // Purple-500
+                Sad: '#3B82F6',           // Blue-500
+                Fearful: '#6366F1',       // Indigo-500
+                Surprised: '#EC4899',     // Pink-500
+                Disgusted: '#14B8A6',     // Teal-500
+                Trustful: '#047857',      // Green-700
+                Anticipative: '#0369A1',  // Blue-700
+                Bored: '#374151',         // Gray-700
+                Proud: '#4338CA',         // Indigo-700
+                Hopeful: '#0D9488',       // Teal-700
+                Lonely: '#1D4ED8',        // Blue-800
+                Relieved: '#059669',      // Green-800
+                Frustrated: '#B91C1C',    // Red-700
+                Enthralled: '#6D28D9',    // Purple-700
+                Embarrassed: '#DB2777',   // Pink-700
+                Indignant: '#991B1B',     // Red-800
+                Content: '#D97706'        // Yellow-700
+            };
+            return colorMapping[category] || '#000000';
+        }
+
+        function resetFields() {
+            document.getElementById('input').value = '';
+            for (const category in sentimentCategories) {
+                const inputId = `${category}Keywords`;
+                document.getElementById(inputId).value = sentimentCategories[category];
+            }
+            clearResults();
+        }
+
+        function clearInputFields() {
+            document.getElementById('input').value = '';
+            clearResults();
+        }
+
+        function clearResults() {
+            document.getElementById('output').innerHTML = '';
+            document.getElementById('wordCount').textContent = '0';
+            document.getElementById('charCount').textContent = '0';
+            document.getElementById('sentimentScore').textContent = '0';
+            // Clear all tally lists
+            for (const category in sentimentCategories) {
+                const listId = `${category.toLowerCase()}TallyList`;
+                document.getElementById(listId).innerHTML = '';
+            }
+            // Reset chart
+            if (sentimentChart) {
+                sentimentChart.destroy();
+                sentimentChart = null;
+            }
+        }
+
+        function saveConfig() {
+            const config = {};
+            for (const category in sentimentCategories) {
+                const inputId = `${category}Keywords`;
+                config[category] = document.getElementById(inputId).value;
+            }
+            localStorage.setItem('sentimentAnalyzerConfig', JSON.stringify(config));
+            alert('Configuration saved successfully!');
+        }
+
+        function loadConfig() {
+            const savedConfig = localStorage.getItem('sentimentAnalyzerConfig');
+            if (savedConfig) {
+                const config = JSON.parse(savedConfig);
+                for (const category in config) {
+                    const inputId = `${category}Keywords`;
+                    const inputElement = document.getElementById(inputId);
+                    if (inputElement) {
+                        inputElement.value = config[category];
+                    }
+                }
+                alert('Configuration loaded successfully!');
+            } else {
+                alert('No saved configuration found.');
+            }
+        }
+
+        document.getElementById('submit').addEventListener('click', analyzeText);
+        document.getElementById('reset').addEventListener('click', resetFields);
+        document.getElementById('clearInput').addEventListener('click', clearInputFields);
+        document.getElementById('saveConfig').addEventListener('click', saveConfig);
+        document.getElementById('loadConfig').addEventListener('click', loadConfig);
+
+        // Initialize empty chart on page load
+        // Optionally, you can create an empty chart or wait until analysis is done
+    </script>
+</body>
+</html>
