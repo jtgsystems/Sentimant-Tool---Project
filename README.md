@@ -44,3 +44,7 @@ This project provides a single-page web application for analyzing the sentiment 
 *   Tailwind CSS (via CDN)
 *   JavaScript (vanilla)
 *   Chart.js (via CDN)
+
+## Credits
+
+This project was created by John Gallie of JTGSYSTEMS.COM in association with Jointtechnologygroup.com.
