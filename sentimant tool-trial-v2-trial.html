@@ -9,10 +9,7 @@
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .keyword-tally {
-            max-height: 300px;
-            overflow-y: auto;
-        }
+        /* Removed max-height for keyword-tally as grid handles layout */
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
@@ -150,7 +147,8 @@
             </div>
             
             <!-- Output Section -->
-            <div id="output" class="mt-6"></div>
+            <div id="output" class="mt-6 p-4 border rounded-lg bg-gray-50 max-h-[400px] overflow-y-auto"></div>
+ <!-- Added max-h and overflow -->
             
             <!-- Statistics and Visualization -->
             <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -167,17 +165,24 @@
                 <!-- Sentiment Visualization -->
                 <div class="bg-gray-50 rounded-lg shadow p-4">
                     <h2 class="text-xl font-semibold mb-4">Sentiment Visualization</h2>
-                    <canvas id="sentimentChart"></canvas>
+                    <div class="relative h-64 md:h-80"> <!-- Added relative positioning and height constraint -->
+                        <canvas id="sentimentChart" class="absolute top-0 left-0 h-full w-full"></canvas> <!-- Added absolute positioning and size constraints -->
+                    </div>
                 </div>
             </div>
             
             <!-- Keyword Tally -->
             <div class="mt-6 bg-gray-50 rounded-lg shadow p-4">
                 <h2 class="text-xl font-semibold mb-4">Keyword Tally</h2>
-                <div class="keyword-tally">
+                <div class="keyword-tally grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <!-- Dynamically Generated Tally Lists -->
-                    <!-- The JavaScript will populate these based on categories -->
                 </div>
+            </div>
+
+            <!-- Paragraph Context Section -->
+            <div class="mt-6 bg-gray-50 rounded-lg shadow p-4">
+                <h2 class="text-xl font-semibold mb-4">Paragraphs with Detected Keywords</h2>
+                <div id="paragraphContext" class="space-y-4 max-h-60 overflow-y-auto"></div>
             </div>
         </div>
     </div>
@@ -219,12 +224,11 @@
             for (const category in sentimentCategories) {
                 const div = document.createElement('div');
                 div.id = `${category.toLowerCase()}Tally`;
-                div.classList.add('mb-4');
+                div.classList.add('mb-4', 'hidden'); // Add 'hidden' class initially
 
                 const h3 = document.createElement('h3');
                 h3.classList.add('font-semibold');
-                // Assign text color based on category
-                h3.classList.add(getCategoryColor(category));
+                h3.classList.add(getCategoryColor(category)); // Use helper function for color
                 h3.textContent = `${category} Keywords:`;
 
                 const ul = document.createElement('ul');
@@ -242,148 +246,235 @@
 
         function analyzeText() {
             const input = document.getElementById('input').value;
-            const words = input.split(/\s+/).filter(word => word.length > 0);
             const outputElement = document.getElementById('output');
+            const paragraphContextElement = document.getElementById('paragraphContext');
             outputElement.innerHTML = '';
+            paragraphContextElement.innerHTML = ''; // Clear previous context
+
+            // Split input into lines first to get line numbers
+            const lines = input.split(/\r?\n/);
             
-            let wordCount = words.length;
+            let totalWordCount = 0;
             let charCount = input.length;
             let sentimentScore = 0;
             
-            // Initialize counts for each category
+            // Initialize counts and tallies for each category
             let sentimentCounts = {};
             let sentimentTally = {};
             for (const category in sentimentCategories) {
                 sentimentCounts[category] = 0;
-                sentimentTally[category] = {};
+                // Structure: { word: { count: number, lines: Set<number> } }
+                sentimentTally[category] = {}; 
             }
             
-            // Preprocess keywords
+            let paragraphsWithKeywords = new Set(); // Store paragraphs containing keywords
+
+            // Preprocess keywords from input fields
             let categoryKeywords = {};
             for (const category in sentimentCategories) {
-                categoryKeywords[category] = sentimentCategories[category].toLowerCase().split(',').map(word => word.trim());
+                const inputId = `${category}Keywords`;
+                const inputElement = document.getElementById(inputId);
+                if (inputElement) {
+                    categoryKeywords[category] = inputElement.value.toLowerCase().split(',').map(word => word.trim()).filter(word => word.length > 0);
+                } else {
+                    categoryKeywords[category] = []; // Fallback if input field not found
+                }
             }
             
-            words.forEach(word => {
-                let cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase();
-                let span = document.createElement('span');
-                span.textContent = word + ' ';
-                
-                let matched = false;
-                for (const category in categoryKeywords) {
-                    if (categoryKeywords[category].includes(cleanWord)) {
-                        // Assign color based on category
-                        let colorClass = getCategoryColor(category);
-                        if (colorClass) {
-                            span.classList.add(colorClass, 'font-semibold');
-                        }
-                        sentimentCounts[category]++;
-                        sentimentScore += getSentimentScore(category);
-                        sentimentTally[category][cleanWord] = (sentimentTally[category][cleanWord] || 0) + 1;
-                        matched = true;
-                        break; // Assign to first matching category
-                    }
+            // Reconstruct paragraphs for context section (simple approach assuming double newline)
+            const paragraphsForContext = input.split(/\r?\n\s*\r?\n/).filter(p => p.trim().length > 0);
+            let paragraphKeywordFound = Array(paragraphsForContext.length).fill(false);
+            let currentParagraphIndex = 0;
+            let lineCounterForParagraphs = 0; // Tracks lines to determine paragraph breaks
+
+            // Process line by line for output highlighting and line number tracking
+            lines.forEach((line, lineIndex) => {
+                const lineNumber = lineIndex + 1; // 1-based line number
+                const words = line.split(/\s+/).filter(word => word.length > 0);
+                totalWordCount += words.length;
+                let lineFragment = document.createDocumentFragment(); // Process line content
+
+                // Prepend line number span
+                const lineNumSpan = document.createElement('span');
+                lineNumSpan.textContent = `${lineNumber}: `;
+                lineNumSpan.classList.add('text-gray-500', 'mr-2', 'inline-block', 'w-8', 'text-right'); // Style line number
+                lineFragment.appendChild(lineNumSpan);
+
+                // Basic paragraph detection based on empty lines
+                if (line.trim() === '' && lineCounterForParagraphs > 0 && lines[lineIndex-1] && lines[lineIndex-1].trim() !== '') {
+                    currentParagraphIndex++; 
                 }
                 
-                outputElement.appendChild(span);
-            });
-            
-            // Update statistics
-            document.getElementById('wordCount').textContent = wordCount;
+                // Process each word in the line
+                words.forEach(word => {
+                    let wordSpan = document.createElement('span');
+                    let cleanWord = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase();
+                    wordSpan.textContent = word + ' '; // Append space after each word
+
+                    let matched = false;
+                    // Check against keywords in each category
+                    for (const category in categoryKeywords) {
+                        if (categoryKeywords[category].includes(cleanWord)) {
+                            let colorClass = getCategoryColor(category);
+                            if (colorClass) {
+                                wordSpan.classList.add(colorClass, 'font-semibold');
+                            }
+                            sentimentCounts[category]++;
+                            sentimentScore += getSentimentScore(category);
+                            
+                            // Update tally with count and line number
+                            if (!sentimentTally[category][cleanWord]) {
+                                sentimentTally[category][cleanWord] = { count: 0, lines: new Set() };
+                            }
+                            sentimentTally[category][cleanWord].count++;
+                            sentimentTally[category][cleanWord].lines.add(lineNumber); // Use 1-based line number
+
+                            matched = true;
+                            // Mark the corresponding paragraph if a keyword is found
+                            if (currentParagraphIndex < paragraphsForContext.length) {
+                                paragraphKeywordFound[currentParagraphIndex] = true; 
+                            }
+                            break; // Assign to first matching category only
+                        }
+                    }
+                    lineFragment.appendChild(wordSpan); // Add word span to line fragment
+                }); // End of words.forEach loop
+
+                outputElement.appendChild(lineFragment); // Add the processed line to the main output
+
+                // Add line break *element* after each line in the output for structure
+                if (lineIndex < lines.length - 1) { 
+                    outputElement.appendChild(document.createElement('br'));
+                }
+                
+                // Update line counter for paragraph tracking
+                if (line.trim() !== '') { 
+                     lineCounterForParagraphs++;
+                } else {
+                     lineCounterForParagraphs = 0; // Reset if it's an empty line
+                }
+
+            }); // End of lines.forEach loop
+
+            // Update statistics display
+            document.getElementById('wordCount').textContent = totalWordCount;
             document.getElementById('charCount').textContent = charCount;
-            document.getElementById('sentimentScore').textContent = sentimentScore.toFixed(2);
+            document.getElementById('sentimentScore').textContent = sentimentScore.toFixed(2); // Keep score potentially non-integer
             
-            // Update tally lists
+            // Update keyword tally lists
             for (const category in sentimentTally) {
+                const tallyDivId = `${category.toLowerCase()}Tally`;
                 const listId = `${category.toLowerCase()}TallyList`;
-                updateTallyList(listId, sentimentTally[category]);
+                const tallyDiv = document.getElementById(tallyDivId);
+                const hasContent = updateTallyList(listId, sentimentTally[category]); // updateTallyList now returns true if content was added
+                
+                if (tallyDiv) {
+                    if (hasContent) {
+                        tallyDiv.classList.remove('hidden'); // Show div if it has content
+                    } else {
+                        tallyDiv.classList.add('hidden'); // Ensure div is hidden if no content
+                    }
+                }
             }
             
-            // Update sentiment chart
+            // Populate the paragraph context section
+            paragraphsForContext.forEach((paragraph, index) => {
+                if (paragraphKeywordFound[index]) {
+                    const pElement = document.createElement('p');
+                    pElement.textContent = paragraph;
+                    pElement.classList.add('border-l-4', 'pl-4', 'italic', 'text-gray-700', 'mb-2'); // Basic styling
+                    paragraphContextElement.appendChild(pElement);
+                }
+            });
+
+            // Update the sentiment distribution chart
             updateSentimentChart(sentimentCounts);
         }
 
         function getCategoryColor(category) {
             const colorMapping = {
-                Positive: 'text-green-600',
-                Negative: 'text-red-600',
-                Confused: 'text-yellow-600',
-                Excited: 'text-orange-600',
-                Neutral: 'text-gray-600',
-                Angry: 'text-purple-600',
-                Sad: 'text-blue-600',
-                Fearful: 'text-indigo-600',
-                Surprised: 'text-pink-600',
-                Disgusted: 'text-teal-600',
-                Trustful: 'text-green-700',
-                Anticipative: 'text-blue-700',
-                Bored: 'text-gray-700',
-                Proud: 'text-indigo-700',
-                Hopeful: 'text-teal-700',
-                Lonely: 'text-blue-800',
-                Relieved: 'text-green-800',
-                Frustrated: 'text-red-700',
-                Enthralled: 'text-purple-700',
-                Embarrassed: 'text-pink-700',
-                Indignant: 'text-red-800',
+                Positive: 'text-green-600', Negative: 'text-red-600', Confused: 'text-yellow-600',
+                Excited: 'text-orange-600', Neutral: 'text-gray-600', Angry: 'text-purple-600',
+                Sad: 'text-blue-600', Fearful: 'text-indigo-600', Surprised: 'text-pink-600',
+                Disgusted: 'text-teal-600', Trustful: 'text-green-700', Anticipative: 'text-blue-700',
+                Bored: 'text-gray-700', Proud: 'text-indigo-700', Hopeful: 'text-teal-700',
+                Lonely: 'text-blue-800', Relieved: 'text-green-800', Frustrated: 'text-red-700',
+                Enthralled: 'text-purple-700', Embarrassed: 'text-pink-700', Indignant: 'text-red-800',
                 Content: 'text-yellow-700'
             };
-            return colorMapping[category] || 'text-black';
+            return colorMapping[category] || 'text-black'; // Default color
         }
 
         function getSentimentScore(category) {
+            // Assign scores to categories (customize as needed)
             const scoreMapping = {
-                Positive: 1,
-                Negative: -1,
-                Confused: -0.2,
-                Excited: 1,
-                Neutral: 0,
-                Angry: -1,
-                Sad: -1,
-                Fearful: -0.8,
-                Surprised: 0.5,
-                Disgusted: -0.7,
-                Trustful: 1,
-                Anticipative: 0.8,
-                Bored: -0.3,
-                Proud: 1,
-                Hopeful: 0.9,
-                Lonely: -0.5,
-                Relieved: 0.7,
-                Frustrated: -0.6,
-                Enthralled: 0.8,
-                Embarrassed: -0.4,
-                Indignant: -0.7,
-                Content: 0.6
+                Positive: 1, Negative: -1, Confused: -0.2, Excited: 1, Neutral: 0, Angry: -1,
+                Sad: -1, Fearful: -0.8, Surprised: 0.5, Disgusted: -0.7, Trustful: 1,
+                Anticipative: 0.8, Bored: -0.3, Proud: 1, Hopeful: 0.9, Lonely: -0.5,
+                Relieved: 0.7, Frustrated: -0.6, Enthralled: 0.8, Embarrassed: -0.4,
+                Indignant: -0.7, Content: 0.6
             };
-            return scoreMapping[category] || 0;
+            return scoreMapping[category] || 0; // Default score
         }
 
         function updateTallyList(listId, tally) {
             const tallyList = document.getElementById(listId);
-            tallyList.innerHTML = '';
-            for (const [word, count] of Object.entries(tally)) {
-                if (count > 0) {
+            if (!tallyList) return false; // Check if element exists, return false if not
+            tallyList.innerHTML = ''; // Clear previous list items
+            let hasEntries = false; // Flag to check if any list items are added
+            // Sort by count descending, then alphabetically by word
+            const sortedTally = Object.entries(tally).sort(([wordA, dataA], [wordB, dataB]) => {
+                 if (dataB.count !== dataA.count) {
+                     return dataB.count - dataA.count;
+                 }
+                 return wordA.localeCompare(wordB);
+            }); 
+            
+            for (const [word, data] of sortedTally) { // data is now { count: number, lines: Set<number> }
+                if (data.count > 0) {
                     const li = document.createElement('li');
-                    li.textContent = `${word}: ${count}`;
+                    li.classList.add('flex', 'justify-between', 'items-center', 'text-sm', 'mb-1'); // Use flexbox for layout
+
+                    const lineNumbers = Array.from(data.lines).sort((a, b) => a - b).join(', '); // Sort and format line numbers
+
+                    // Part 1: Word and Count
+                    const wordCountSpan = document.createElement('span');
+                    wordCountSpan.textContent = `${word}: ${data.count}`;
+                    wordCountSpan.classList.add('font-medium', 'mr-2'); // Style word/count part
+
+                    // Part 2: Line Numbers
+                    const linesSpan = document.createElement('span');
+                    linesSpan.textContent = `Lines: ${lineNumbers}`;
+                    linesSpan.classList.add('text-gray-600', 'text-xs'); // Style line numbers part
+
+                    li.appendChild(wordCountSpan);
+                    li.appendChild(linesSpan);
+
+                    hasEntries = true; // Mark that content was added
                     tallyList.appendChild(li);
                 }
             }
+            return hasEntries; // Return whether content was added
         }
 
         function updateSentimentChart(sentimentCounts) {
             const ctx = document.getElementById('sentimentChart').getContext('2d');
             
             if (sentimentChart) {
-                sentimentChart.destroy();
+                sentimentChart.destroy(); // Destroy previous chart instance if exists
             }
             
-            const labels = Object.keys(sentimentCounts);
-            const data = Object.values(sentimentCounts);
+            const labels = Object.keys(sentimentCounts).filter(key => sentimentCounts[key] > 0); // Only include categories with counts > 0
+            const data = labels.map(label => sentimentCounts[label]);
             const backgroundColors = labels.map(label => getColorForChart(label));
             
+            if (labels.length === 0) { // Handle case with no detected sentiments
+                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Clear canvas
+                return;
+            }
+
             sentimentChart = new Chart(ctx, {
-                type: 'pie', // Changed to pie for multiple categories
+                type: 'pie', // Pie chart suits distribution well
                 data: {
                     labels: labels,
                     datasets: [{
@@ -393,13 +484,14 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false, // Allow chart to resize within container
                     plugins: {
                         legend: {
-                            position: 'right',
+                            position: 'right', // Position legend
                         },
                         title: {
                             display: true,
-                            text: 'Sentiment Distribution'
+                            text: 'Sentiment Distribution' // Chart title
                         }
                     }
                 }
@@ -407,69 +499,76 @@
         }
 
         function getColorForChart(category) {
+            // Map category names to hex colors for the chart
             const colorMapping = {
-                Positive: '#10B981',      // Green-500
-                Negative: '#EF4444',      // Red-500
-                Confused: '#F59E0B',      // Yellow-500
-                Excited: '#F97316',       // Orange-500
-                Neutral: '#6B7280',       // Gray-500
-                Angry: '#8B5CF6',         // Purple-500
-                Sad: '#3B82F6',           // Blue-500
-                Fearful: '#6366F1',       // Indigo-500
-                Surprised: '#EC4899',     // Pink-500
-                Disgusted: '#14B8A6',     // Teal-500
-                Trustful: '#047857',      // Green-700
-                Anticipative: '#0369A1',  // Blue-700
-                Bored: '#374151',         // Gray-700
-                Proud: '#4338CA',         // Indigo-700
-                Hopeful: '#0D9488',       // Teal-700
-                Lonely: '#1D4ED8',        // Blue-800
-                Relieved: '#059669',      // Green-800
-                Frustrated: '#B91C1C',    // Red-700
-                Enthralled: '#6D28D9',    // Purple-700
-                Embarrassed: '#DB2777',   // Pink-700
-                Indignant: '#991B1B',     // Red-800
-                Content: '#D97706'        // Yellow-700
+                Positive: '#10B981', Negative: '#EF4444', Confused: '#F59E0B', Excited: '#F97316',
+                Neutral: '#6B7280', Angry: '#8B5CF6', Sad: '#3B82F6', Fearful: '#6366F1',
+                Surprised: '#EC4899', Disgusted: '#14B8A6', Trustful: '#047857', Anticipative: '#0369A1',
+                Bored: '#374151', Proud: '#4338CA', Hopeful: '#0D9488', Lonely: '#1D4ED8',
+                Relieved: '#059669', Frustrated: '#B91C1C', Enthralled: '#6D28D9', Embarrassed: '#DB2777',
+                Indignant: '#991B1B', Content: '#D97706'
             };
-            return colorMapping[category] || '#000000';
+            return colorMapping[category] || '#CCCCCC'; // Default grey color
         }
 
         function resetFields() {
             document.getElementById('input').value = '';
+            // Reset keyword fields to default values stored in sentimentCategories
             for (const category in sentimentCategories) {
                 const inputId = `${category}Keywords`;
-                document.getElementById(inputId).value = sentimentCategories[category];
+                const inputElement = document.getElementById(inputId);
+                if (inputElement) {
+                    inputElement.value = sentimentCategories[category];
+                }
             }
-            clearResults();
+            clearResults(); // Clear analysis results and chart
         }
 
         function clearInputFields() {
             document.getElementById('input').value = '';
-            clearResults();
+            clearResults(); // Also clear results when clearing input
         }
 
         function clearResults() {
             document.getElementById('output').innerHTML = '';
+            document.getElementById('paragraphContext').innerHTML = ''; // Clear paragraph context
             document.getElementById('wordCount').textContent = '0';
             document.getElementById('charCount').textContent = '0';
             document.getElementById('sentimentScore').textContent = '0';
-            // Clear all tally lists
+            
+            // Clear all tally lists and hide sections
             for (const category in sentimentCategories) {
                 const listId = `${category.toLowerCase()}TallyList`;
-                document.getElementById(listId).innerHTML = '';
+                const tallyDivId = `${category.toLowerCase()}Tally`;
+                const listElement = document.getElementById(listId);
+                const tallyDiv = document.getElementById(tallyDivId);
+                 if (listElement) {
+                    listElement.innerHTML = '';
+                 }
+                 if (tallyDiv) {
+                     tallyDiv.classList.add('hidden'); // Hide section on clear
+                 }
             }
+            
             // Reset chart
             if (sentimentChart) {
                 sentimentChart.destroy();
                 sentimentChart = null;
+                 // Clear the canvas explicitly if needed
+                const ctx = document.getElementById('sentimentChart').getContext('2d');
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
             }
         }
 
         function saveConfig() {
             const config = {};
+            // Save current values from keyword input fields
             for (const category in sentimentCategories) {
                 const inputId = `${category}Keywords`;
-                config[category] = document.getElementById(inputId).value;
+                const inputElement = document.getElementById(inputId);
+                if (inputElement) {
+                    config[category] = inputElement.value;
+                }
             }
             localStorage.setItem('sentimentAnalyzerConfig', JSON.stringify(config));
             alert('Configuration saved successfully!');
@@ -479,6 +578,7 @@
             const savedConfig = localStorage.getItem('sentimentAnalyzerConfig');
             if (savedConfig) {
                 const config = JSON.parse(savedConfig);
+                // Load saved values into keyword input fields
                 for (const category in config) {
                     const inputId = `${category}Keywords`;
                     const inputElement = document.getElementById(inputId);
@@ -492,14 +592,17 @@
             }
         }
 
+        // Add event listeners to buttons
         document.getElementById('submit').addEventListener('click', analyzeText);
         document.getElementById('reset').addEventListener('click', resetFields);
         document.getElementById('clearInput').addEventListener('click', clearInputFields);
         document.getElementById('saveConfig').addEventListener('click', saveConfig);
         document.getElementById('loadConfig').addEventListener('click', loadConfig);
 
-        // Initialize empty chart on page load
-        // Optionally, you can create an empty chart or wait until analysis is done
+        // Initialize empty chart on page load or clear canvas
+        const initialCtx = document.getElementById('sentimentChart').getContext('2d');
+        initialCtx.clearRect(0, 0, initialCtx.canvas.width, initialCtx.canvas.height);
+
     </script>
 </body>
 </html>
