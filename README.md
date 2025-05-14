@@ -1,50 +1,55 @@
-# Enhanced Conversation Sentiment Analyzer
+# Sentimant Tool - Conversation Sentiment Analyzer
 
-This project provides a single-page web application for analyzing the sentiment of conversation text based on user-defined keywords.
+A modern web application built with Next.js and Tailwind CSS to analyze sentiment in conversation text through customizable keyword categories. The tool highlights keywords, calculates sentiment scores, and visualizes results with detailed context.
 
 ## Features
 
-*   **Text Input:** Paste conversation text into the provided textarea.
-*   **Customizable Keywords:** Define comma-separated lists of positive and negative keywords. Default lists are provided.
-*   **Sentiment Analysis:**
-    *   Highlights keywords based on their category (Positive, Negative, Confused, etc.) within the input text, prepending each line with its number.
-*   Calculates and displays statistics:
-*   Word Count
-*   Character Count
-*   Overall Sentiment Score (calculated based on weighted keyword categories).
-*   **Visualization:** Displays a pie chart showing the distribution of detected sentiment categories.
-*   **Keyword Tally:** Lists the specific keywords found, their frequency, and the line numbers where they appear. Tally sections for categories with no detected keywords are hidden.
-*   **Paragraph Context:** Displays the full paragraphs where keywords were detected.
-*   **Controls:**
-    *   `Submit`: Analyze the current text and keywords.
-    *   `Reset`: Clear input text and restore default keywords.
-    *   `Clear Input`: Clear only the input text area.
-    *   `Save Config`: Save the current positive/negative keyword lists to the browser's local storage.
-    *   `Load Config`: Load previously saved keyword lists from local storage.
+- **User Input:** Paste or type conversation text for analysis.
+- **Keyword Customization:** Modify positive, negative, and multiple other sentiment categories.
+- **Sentiment Analysis:** Highlights keywords by category with line numbers.
+- **Statistics:** Shows word count, character count, and weighted sentiment score.
+- **Visualization:** Pie chart displays sentiment distribution.
+- **Keyword Tally:** Lists detected keywords with frequency and line references.
+- **Paragraph Context:** Displays paragraphs containing keywords for context.
+- **Local Storage:** Save and load keyword configurations.
+- **Responsive UI:** Built using Tailwind CSS and Radix UI components.
+- **Accessible:** Keyboard navigable with clear visual indicators.
+- **Modern Tech Stack:** Next.js, React, TypeScript, Chart.js, Tailwind CSS.
 
-## Files
+## Project Structure
 
-*   `sentimant tool- PERFECT.html`: The main application file. Contains HTML structure, Tailwind CSS styling, and JavaScript logic.
-*   `sentimant tool-trial-v2-trial.html`: An enhanced version with multiple sentiment categories, paragraph context, and line number details.
-*   `sentimant tool-trial.html`: Another trial or earlier version.
+- **app/**: Main Next.js application files including the page component handling sentiment analysis logic.
+- **components/**: Reusable UI components such as `HighlightedText`, `SentimentChart`, `KeywordTally`, `ParagraphContext`, and `UsageInstructions`.
+- **lib/**: Utility files including default sentiment categories and helper functions.
+- **styles/**: Global CSS styles.
+- **public/**: Static assets like placeholder images.
+- **package.json**: Project dependencies and scripts.
 
-## Usage
+## Getting Started
 
-1.  Open `sentimant tool- PERFECT.html` in a web browser.
-2.  Paste the conversation text into the input area.
-3.  (Optional) Modify the positive and negative keyword lists.
-4.  (Optional, for `sentimant tool-trial-v2-trial.html`) Modify keyword lists for various sentiment categories.
-5.  Click "Submit" to analyze the text.
-6.  View the highlighted text (with line numbers), statistics, chart, keyword tallies (with line numbers), and paragraph context.
-76.  Use "Save Config" and "Load Config" to manage keyword sets.
+1. Clone the repository.
+2. Run `npm install` to install dependencies.
+3. Use `npm run dev` to start the development server.
+4. Open the app in your browser at `http://localhost:3000`.
+5. Paste conversation text, customize keywords, and analyze sentiment.
 
-## Technologies Used
+## Technologies
 
-*   HTML
-*   Tailwind CSS (via CDN)
-*   JavaScript (vanilla)
-*   Chart.js (via CDN)
+- Next.js (React framework)
+- TypeScript
+- Tailwind CSS
+- Radix UI components
+- Chart.js for data visualization
+- Lucide React icons
+
+## Usage Instructions
+
+1. Paste your conversation text into the main input area.
+2. Customize keywords in the "Keywords" tab if desired.
+3. Click "Analyze" to process the text.
+4. View results including sentiment highlights, statistics, charts, and context.
+5. Save or load your keyword configurations for future use.
 
 ## Credits
 
-This project was created by John Gallie of JTGSYSTEMS.COM in association with Jointtechnologygroup.com.
+Developed by John Gallie of JTGSYSTEMS.COM in collaboration with Jointtechnologygroup.com.
