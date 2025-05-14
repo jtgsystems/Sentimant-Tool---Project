@@ -1,17 +1,27 @@
-# Ignore operating system files
-.DS_Store
-Thumbs.db
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Ignore Node dependencies (if used later)
-node_modules/
+# dependencies
+/node_modules
 
-# Ignore log files
-*.log
+# next.js
+/.next/
+/out/
 
-# Ignore temporary files
-*.tmp
-*.temp
+# production
+/build
 
-# Ignore IDE/editor directories
-.vscode/
-.idea/
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
