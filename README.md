@@ -1,3 +1,5 @@
+![Banner](banner.png)
+
 # Sentimant Tool - Conversation Sentiment Analyzer
 
 A modern web application built with Next.js and Tailwind CSS to analyze sentiment in conversation text through customizable keyword categories. The tool highlights keywords, calculates sentiment scores, and visualizes results with detailed context.
