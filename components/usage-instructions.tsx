@@ -14,7 +14,7 @@ export default function UsageInstructions() {
               <span className="font-medium">Paste your conversation</span> in the text area below
             </li>
             <li>
-              <span className="font-medium">Customize keywords</span> in the "Keywords" tab (optional)
+              <span className="font-medium">Customize keywords</span> in the &ldquo;Keywords&rdquo; tab (optional)
             </li>
             <li>
               Click <span className="font-medium">Analyze</span> to process the text
