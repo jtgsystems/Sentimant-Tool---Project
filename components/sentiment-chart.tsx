@@ -10,6 +10,13 @@ interface SentimentChartProps {
   sentimentCounts: Record<string, number>
 }
 
+/**
+ * SentimentChart Component
+ * Displays a pie chart visualization of sentiment distribution
+ * Uses Chart.js to render the data with custom colors for each category
+ *
+ * @param sentimentCounts - Object mapping sentiment categories to their counts
+ */
 export default function SentimentChart({ sentimentCounts }: SentimentChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null)
   const chartInstance = useRef<Chart | null>(null)
@@ -82,7 +89,12 @@ export default function SentimentChart({ sentimentCounts }: SentimentChartProps)
   return <canvas ref={chartRef} />
 }
 
-function getColorForChart(category: string) {
+/**
+ * Returns the color for a given sentiment category
+ * @param category - The sentiment category name
+ * @returns Hex color code for the category
+ */
+function getColorForChart(category: string): string {
   const colorMapping: Record<string, string> = {
     Positive: "#10B981",
     Negative: "#EF4444",

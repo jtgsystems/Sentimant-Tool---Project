@@ -1,3 +1,11 @@
+/**
+ * Default Sentiment Categories
+ * Contains predefined keyword lists for 22 different emotional categories
+ * Each category maps to a comma-separated string of keywords that represent that emotion
+ *
+ * Categories are used to analyze text and identify emotional sentiment
+ * Keywords are matched case-insensitively and stripped of punctuation
+ */
 export const defaultSentimentCategories: Record<string, string> = {
   Positive:
     "good, great, excellent, amazing, wonderful, fantastic, superior, helpful, friendly, courteous, knowledgeable, professional, efficient, timely, accurate, correct, precise, recommend, satisfied",

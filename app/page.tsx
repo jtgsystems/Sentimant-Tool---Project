@@ -16,9 +16,26 @@ import { defaultSentimentCategories } from "@/lib/sentiment-data"
 import Topper from "@/components/topper"
 import UsageInstructions from "@/components/usage-instructions"
 
+interface Highlight {
+  word: string
+  index: number
+  category: string
+}
+
+interface OutputLine {
+  text: string
+  lineNumber: number
+  highlights: Highlight[]
+}
+
+/**
+ * Main Sentiment Analyzer Component
+ * Analyzes conversation text for sentiment using customizable keyword categories
+ */
 export default function SentimentAnalyzer() {
+  // State for input text and analysis results
   const [input, setInput] = useState("")
-  const [output, setOutput] = useState<{ text: string; lineNumber: number; highlights: any[] }[]>([])
+  const [output, setOutput] = useState<OutputLine[]>([])
   const [wordCount, setWordCount] = useState(0)
   const [charCount, setCharCount] = useState(0)
   const [sentimentScore, setSentimentScore] = useState(0)
@@ -30,14 +47,23 @@ export default function SentimentAnalyzer() {
   const [sentimentCategories, setSentimentCategories] = useState(defaultSentimentCategories)
   const [activeTab, setActiveTab] = useState("results")
 
+  /**
+   * Analyzes the input text for sentiment keywords
+   * Processes each line, identifies keywords, calculates sentiment scores,
+   * and tracks keyword occurrences and their locations
+   */
   const analyzeText = () => {
-    if (!input.trim()) return
+    // Validate input
+    if (!input.trim()) {
+      alert("Please enter some text to analyze.")
+      return
+    }
 
     const lines = input.split(/\r?\n/)
     let totalWordCount = 0
     const newSentimentCounts: Record<string, number> = {}
     const newKeywordTallies: Record<string, Record<string, { count: number; lines: number[] }>> = {}
-    const newOutput: { text: string; lineNumber: number; highlights: any[] }[] = []
+    const newOutput: OutputLine[] = []
 
     // Initialize counts and tallies
     Object.keys(sentimentCategories).forEach((category) => {
@@ -67,7 +93,7 @@ export default function SentimentAnalyzer() {
         currentParagraphIndex++
       }
 
-      const lineHighlights: any[] = []
+      const lineHighlights: Highlight[] = []
 
       // Process each word
       words.forEach((word, wordIndex) => {
@@ -139,17 +165,26 @@ export default function SentimentAnalyzer() {
     setActiveTab("results")
   }
 
+  /**
+   * Resets all fields including input, categories, and results
+   */
   const resetFields = () => {
     setInput("")
     setSentimentCategories(defaultSentimentCategories)
     clearResults()
   }
 
+  /**
+   * Clears only the input text and results
+   */
   const clearInput = () => {
     setInput("")
     clearResults()
   }
 
+  /**
+   * Clears all analysis results
+   */
   const clearResults = () => {
     setOutput([])
     setWordCount(0)
@@ -160,18 +195,35 @@ export default function SentimentAnalyzer() {
     setParagraphsWithKeywords([])
   }
 
+  /**
+   * Saves the current sentiment categories configuration to localStorage
+   */
   const saveConfig = () => {
-    localStorage.setItem("sentimentAnalyzerConfig", JSON.stringify(sentimentCategories))
-    alert("Configuration saved successfully!")
+    try {
+      localStorage.setItem("sentimentAnalyzerConfig", JSON.stringify(sentimentCategories))
+      alert("Configuration saved successfully!")
+    } catch (error) {
+      console.error("Error saving configuration:", error)
+      alert("Failed to save configuration. Please try again.")
+    }
   }
 
+  /**
+   * Loads saved sentiment categories configuration from localStorage
+   */
   const loadConfig = () => {
-    const savedConfig = localStorage.getItem("sentimentAnalyzerConfig")
-    if (savedConfig) {
-      setSentimentCategories(JSON.parse(savedConfig))
-      alert("Configuration loaded successfully!")
-    } else {
-      alert("No saved configuration found.")
+    try {
+      const savedConfig = localStorage.getItem("sentimentAnalyzerConfig")
+      if (savedConfig) {
+        const parsedConfig = JSON.parse(savedConfig)
+        setSentimentCategories(parsedConfig)
+        alert("Configuration loaded successfully!")
+      } else {
+        alert("No saved configuration found.")
+      }
+    } catch (error) {
+      console.error("Error loading configuration:", error)
+      alert("Failed to load configuration. The saved data may be corrupted.")
     }
   }
 
@@ -182,7 +234,13 @@ export default function SentimentAnalyzer() {
     }))
   }
 
-  const getSentimentScore = (category: string) => {
+  /**
+   * Returns the sentiment score weight for a given category
+   * Positive emotions have positive scores, negative emotions have negative scores
+   * @param category - The sentiment category name
+   * @returns The numeric weight for the sentiment (-1 to 1)
+   */
+  const getSentimentScore = (category: string): number => {
     const scoreMapping: Record<string, number> = {
       Positive: 1,
       Negative: -1,
@@ -293,7 +351,7 @@ export default function SentimentAnalyzer() {
                     </CardHeader>
                     <CardContent>
                       <ScrollArea className="h-[200px]">
-                        <HighlightedText lines={output} sentimentCategories={sentimentCategories} />
+                        <HighlightedText lines={output} />
                       </ScrollArea>
                     </CardContent>
                   </Card>

@@ -6,7 +6,7 @@ interface KeywordTallyProps {
 
 export default function KeywordTally({ tallies }: KeywordTallyProps) {
   // Get categories with at least one keyword detected
-  const categoriesWithKeywords = Object.entries(tallies).filter(([_, words]) => Object.keys(words).length > 0)
+  const categoriesWithKeywords = Object.entries(tallies).filter(([, words]) => Object.keys(words).length > 0)
 
   if (categoriesWithKeywords.length === 0) {
     return <p className="text-muted-foreground text-center py-4">No keywords detected</p>
@@ -19,7 +19,7 @@ export default function KeywordTally({ tallies }: KeywordTallyProps) {
           <h3 className={`font-semibold ${getCategoryColor(category)}`}>{category} Keywords:</h3>
           <ul className="space-y-1">
             {Object.entries(words)
-              .sort(([_, dataA], [__, dataB]) => {
+              .sort(([, dataA], [, dataB]) => {
                 // Sort by count (descending)
                 return dataB.count - dataA.count
               })
