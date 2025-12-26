@@ -32,18 +32,18 @@ This comprehensive reference guide provides detailed documentation for the Senti
 ## Tech Stack
 
 ### Core Framework & Language
-- **Next.js**: v15.2.4 (React framework with App Router)
-- **React**: v18.3.1 (UI library)
-- **TypeScript**: v5.8.2 (Type-safe JavaScript)
+- **Next.js**: v16.1.1 (React framework with App Router)
+- **React**: v19.2.3 (UI library)
+- **TypeScript**: v5.9.3 (Type-safe JavaScript)
 - **Node.js**: Compatible with v18+ (ES6+ features required)
 
 ### UI & Styling
-- **Tailwind CSS**: v3.4.17 (Utility-first CSS framework)
+- **Tailwind CSS**: v4.1.18 (Utility-first CSS framework)
 - **Radix UI**: v1.x (Accessible component primitives)
   - Accordion, Alert Dialog, Avatar, Checkbox, Dialog
   - Dropdown Menu, Label, Progress, Scroll Area
   - Select, Separator, Slider, Switch, Tabs, Toast, Tooltip
-- **Lucide React**: v0.482.0 (Icon library)
+- **Lucide React**: v0.562.0 (Icon library)
 - **Class Variance Authority**: v0.7.1 (Component variant management)
 - **clsx + tailwind-merge**: Conditional class name utilities
 
