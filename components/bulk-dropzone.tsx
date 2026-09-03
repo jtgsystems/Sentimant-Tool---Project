@@ -12,6 +12,27 @@ import ParagraphContext from "@/components/paragraph-context"
 import { analyzeSentiment, type SentimentCategoryMap } from "@/lib/analyze-sentiment"
 
 const SUPPORTED_EXTENSIONS = [".txt", ".md", ".csv", ".json", ".log"]
+const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"]
+
+// Local OCR bridge (see ~/Desktop/UltraFast-RapidOCR/ocr_bridge.py)
+const OCR_BRIDGE_URL = "http://127.0.0.1:8770/ocr"
+
+async function ocrImage(file: File): Promise<string> {
+  const res = await fetch(OCR_BRIDGE_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": file.type || "image/*",
+      "X-Filename": file.name,
+    },
+    body: await file.arrayBuffer(),
+  })
+  if (!res.ok) {
+    throw new Error(`OCR bridge error (HTTP ${res.status})`)
+  }
+  const data = (await res.json()) as { ok?: boolean; text?: string; error?: string }
+  if (!data.ok) throw new Error(data.error || "OCR failed")
+  return data.text || ""
+}
 
 interface BulkResult {
   name: string
@@ -47,7 +68,9 @@ export default function BulkDropzone({ categories }: BulkDropzoneProps) {
     const results = await Promise.all(
       incoming.map(async (file) => {
         const name = file.name.toLowerCase()
-        if (!SUPPORTED_EXTENSIONS.some((ext) => name.endsWith(ext))) {
+        const isImage = IMAGE_EXTENSIONS.some((ext) => name.endsWith(ext))
+        const isText = SUPPORTED_EXTENSIONS.some((ext) => name.endsWith(ext))
+        if (!isImage && !isText) {
           return {
             name: file.name,
             size: file.size,
@@ -62,15 +85,55 @@ export default function BulkDropzone({ categories }: BulkDropzoneProps) {
             error: "Unsupported file type",
           }
         }
-        let rawText = await file.text()
-        if (name.endsWith(".json")) {
-          try {
-            const parsed = JSON.parse(rawText)
-            if (typeof parsed !== "string") {
-              rawText = JSON.stringify(parsed, null, 2)
+        let rawText = ""
+        try {
+          if (isImage) {
+            rawText = await ocrImage(file)
+          } else {
+            rawText = await file.text()
+            if (name.endsWith(".json")) {
+              try {
+                const parsed = JSON.parse(rawText)
+                if (typeof parsed !== "string") {
+                  rawText = JSON.stringify(parsed, null, 2)
+                }
+              } catch {
+                // keep raw text if JSON is invalid
+              }
             }
-          } catch {
-            // keep raw text if JSON is invalid
+          }
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Failed to read file"
+          const suffix = isImage
+            ? " — is the local OCR bridge running? (python3 ~/Desktop/UltraFast-RapidOCR/ocr_bridge.py)"
+            : ""
+          return {
+            name: file.name,
+            size: file.size,
+            text: "",
+            wordCount: 0,
+            charCount: 0,
+            score: 0,
+            counts: {},
+            tallies: {},
+            lines: [],
+            paragraphs: [],
+            error: `${message}${suffix}`,
+          }
+        }
+        if (isImage && !rawText.trim()) {
+          return {
+            name: file.name,
+            size: file.size,
+            text: "",
+            wordCount: 0,
+            charCount: 0,
+            score: 0,
+            counts: {},
+            tallies: {},
+            lines: [],
+            paragraphs: [],
+            error: "No text detected in image",
           }
         }
         const result = analyzeSentiment(rawText, categories)
@@ -148,12 +211,14 @@ export default function BulkDropzone({ categories }: BulkDropzoneProps) {
         >
           <UploadCloud className="mx-auto h-10 w-10 text-gray-400 mb-2" />
           <p className="text-gray-600">Drag and drop files here or click to browse</p>
-          <p className="text-xs text-gray-400 mt-1">Supported: .txt, .md, .csv, .json, .log</p>
+          <p className="text-xs text-gray-400 mt-1">
+            Supported: .txt, .md, .csv, .json, .log, and images (.png, .jpg, .webp) via OCR
+          </p>
           <input
             ref={inputRef}
             type="file"
             multiple
-            accept=".txt,.md,.csv,.json,.log"
+            accept=".txt,.md,.csv,.json,.log,.png,.jpg,.jpeg,.webp,.gif,.bmp"
             className="hidden"
             onChange={handleInputChange}
           />
