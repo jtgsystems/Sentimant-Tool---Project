@@ -32,28 +32,27 @@ This comprehensive reference guide provides detailed documentation for the Senti
 ## Tech Stack
 
 ### Core Framework & Language
-- **Next.js**: v16.1.1 (React framework with App Router)
-- **React**: v19.2.3 (UI library)
+- **Next.js**: v16.3.4 (React framework with App Router)
+- **React**: v19.2.8 (UI library)
 - **TypeScript**: v5.9.3 (Type-safe JavaScript)
 - **Node.js**: Compatible with v18+ (ES6+ features required)
 
 ### UI & Styling
-- **Tailwind CSS**: v4.1.18 (Utility-first CSS framework)
-- **Radix UI**: v1.x (Accessible component primitives)
-  - Accordion, Alert Dialog, Avatar, Checkbox, Dialog
-  - Dropdown Menu, Label, Progress, Scroll Area
-  - Select, Separator, Slider, Switch, Tabs, Toast, Tooltip
+- **Tailwind CSS**: v4.3.3 (Utility-first CSS framework, via `@tailwindcss/postcss`)
+- **Radix UI**: v1.x (Accessible component primitives; only the in-use set is vendored)
+  - Scroll Area, Slot, Tabs
+
+  (Unused shadcn primitives were pruned — see history
 - **Lucide React**: v0.562.0 (Icon library)
 - **Class Variance Authority**: v0.7.1 (Component variant management)
 - **clsx + tailwind-merge**: Conditional class name utilities
 
 ### Data Visualization
-- **Chart.js**: v4.4.8 (Canvas-based charting)
-- **react-chartjs-2**: v5.3.0 (React wrapper for Chart.js)
+- **Chart.js**: v4.5.1 (Canvas-based charting, used directly)
 
 ### Development Tools
-- **ESLint**: v9.23.0 (Code linting)
-- **PostCSS**: v8.5.3 (CSS processing)
+- **ESLint**: v9.39.5 (Code linting, flat config `eslint .`)
+- **PostCSS**: v8.5.26 (CSS processing)
 - **Next.js Turbo**: Development mode with Turbopack bundler
 
 ### TypeScript Configuration
@@ -423,54 +422,49 @@ npm run lint
 
 ### Dependency Categories
 
-#### Core Dependencies (9 packages)
+#### Core Dependencies (core app packages)
 ```json
 {
-  "next": "15.2.4",                    // Framework
-  "react": "18.3.1",                   // UI library
-  "react-dom": "18.3.1",               // DOM renderer
-  "typescript": "5.8.2",               // Language (devDep)
-  "chart.js": "4.4.8",                 // Charting engine
-  "react-chartjs-2": "5.3.0",          // React wrapper
-  "tailwindcss": "3.4.17",             // CSS framework (devDep)
-  "lucide-react": "0.482.0",           // Icons
+  "next": "16.3.4",                    // Framework
+  "react": "19.2.8",                   // UI library
+  "react-dom": "19.2.8",               // DOM renderer
+  "typescript": "5.9.3",               // Language (devDep)
+  "chart.js": "4.5.1",                 // Charting engine (used directly)
+  "tailwindcss": "4.3.3",             // CSS framework (devDep)
+  "lucide-react": "0.562.0",           // Icons
   "clsx": "2.1.1"                      // Class utilities
 }
 ```
 
-#### Radix UI Components (16 packages)
-All prefixed with `@radix-ui/react-*`:
-- accordion, alert-dialog, avatar, checkbox, dialog
-- dropdown-menu, icons, label, progress, scroll-area
-- select, separator, slider, slot, switch, tabs, toast, tooltip
+#### Radix UI Components (3 vendored)
+All prefixed with `@radix-ui/react-*`; only uint-used set is committed:
+- scroll-area, slot, tabs
 
-#### Utility Libraries (5 packages)
+#### Utility Libraries (4 packages)
 ```json
 {
   "class-variance-authority": "0.7.1",  // Component variants
-  "tailwind-merge": "3.0.2",            // Tailwind class merging
-  "tailwindcss-animate": "1.0.7",       // Animation utilities
-  "cmdk": "1.0.4",                      // Command menu
-  "embla-carousel-react": "8.5.2"       // Carousel component
+  "tailwind-merge": "3.6.0",            // Tailwind class merging
+  "@tailwindcss/postcss": "4.3.3"        // Tailwind v4 PostCSS plugin (devDep)
 }
 ```
 
-#### Development Dependencies (6 packages)
+#### Development Dependencies (8 packages)
 ```json
 {
-  "@types/node": "22.13.14",
-  "@types/react": "18.3.12",
-  "@types/react-dom": "18.3.1",
-  "eslint": "9.23.0",
-  "eslint-config-next": "15.2.4",
-  "postcss": "8.5.3"
+  "@types/node": "25.9.5",
+  "@types/react": "19.2.18",
+  "@types/react-dom": "19.2.5",
+  "eslint": "9.39.5",
+  "eslint-config-next": "16.3.4",
+  "postcss": "8.5.26"
 }
 ```
 
 ### Total Package Count
-- **Production**: 37 packages
-- **Development**: 6 packages
-- **Total**: 43 packages
+- **Production**:  11 direct
+- **Development**:  9 direct
+- (Transitive deps and resolved via the pnpm lockfile; `pnpm audit` reports **0 vulnerabilities**)
 
 ### Build Output
 ```
@@ -478,6 +472,8 @@ Production build creates:
 - .next/static/        (Static assets)
 - .next/server/        (Server-side code)
 - .next/cache/         (Build cache)
+```
+(Removed unused shadcn boilerplate,the pre-existing bulid was broken by their undeclared deps.)
 ```
 
 ---
@@ -1250,20 +1246,17 @@ Sentimant-Tool---Project/
 │   ├── page.tsx            # Main analyzer component (core logic)
 │   └── globals.css         # Global styles + Tailwind imports
 ├── components/
-│   ├── ui/                 # Radix UI primitives (54 files)
+│   ├── ui/                 # In-use Radix/Tailwind primitives (6 files)
 │   ├── highlighted-text.tsx    # Keyword highlighting renderer
 │   ├── sentiment-chart.tsx     # Chart.js pie chart
 │   ├── keyword-tally.tsx       # Frequency list display
 │   ├── paragraph-context.tsx   # Paragraph context viewer
 │   ├── usage-instructions.tsx  # Help text component
-│   ├── topper.tsx              # Header/banner component
-│   └── theme-provider.tsx      # Dark mode support (if implemented)
+│   └── topper.tsx              # Header/banner component
 ├── lib/
 │   ├── sentiment-data.ts   # Default keyword dictionaries (22 categories)
 │   └── utils.ts            # Utility functions (cn helper)
-├── styles/
-│   └── globals.css         # Global CSS variables + Tailwind
-├── public/                 # Static assets (images, icons)
+├── public/                 # Static assets(image,and icons
 ├── package.json            # Dependencies and scripts
 ├── tsconfig.json           # TypeScript configuration
 ├── tailwind.config.ts      # Tailwind CSS configuration

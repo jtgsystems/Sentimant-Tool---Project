@@ -23,15 +23,16 @@ A modern web application built with Next.js and Tailwind CSS to analyze sentimen
 - **app/**: Main Next.js application files including the page component handling sentiment analysis logic.
 - **components/**: Reusable UI components such as `HighlightedText`, `SentimentChart`, `KeywordTally`, `ParagraphContext`, and `UsageInstructions`.
 - **lib/**: Utility files including default sentiment categories and helper functions.
-- **styles/**: Global CSS styles.
 - **public/**: Static assets like placeholder images.
 - **package.json**: Project dependencies and scripts.
+
+> **Note:** the repo uses [pnpm](https://pnpm.io) as its package manager — run `pnpm install` and `pnpm run dev` (a `package-lock.json`/`npm` flow is not maintained
 
 ## Getting Started
 
 1. Clone the repository.
-2. Run `npm install` to install dependencies.
-3. Use `npm run dev` to start the development server.
+2. Run `pnpm install` to install dependencies.
+3. Use `pnpm run dev` to start the development server.
 4. Open the app in your browser at `http://localhost:3000`.
 5. Paste conversation text, customize keywords, and analyze sentiment.
 
