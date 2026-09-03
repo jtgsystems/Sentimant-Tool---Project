@@ -10,10 +10,9 @@ interface HighlightedTextProps {
       category: string
     }[]
   }[]
-  sentimentCategories: Record<string, string>
 }
 
-export default function HighlightedText({ lines, sentimentCategories }: HighlightedTextProps) {
+export default function HighlightedText({ lines }: HighlightedTextProps) {
   if (lines.length === 0) {
     return <p className="text-muted-foreground text-center py-4">No text analyzed</p>
   }

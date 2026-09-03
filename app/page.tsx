@@ -16,9 +16,11 @@ import { defaultSentimentCategories } from "@/lib/sentiment-data"
 import Topper from "@/components/topper"
 import UsageInstructions from "@/components/usage-instructions"
 
+type Highlight = { word: string; index: number; category: string }
+
 export default function SentimentAnalyzer() {
   const [input, setInput] = useState("")
-  const [output, setOutput] = useState<{ text: string; lineNumber: number; highlights: any[] }[]>([])
+  const [output, setOutput] = useState<{ text: string; lineNumber: number; highlights: Highlight[] }[]>([])
   const [wordCount, setWordCount] = useState(0)
   const [charCount, setCharCount] = useState(0)
   const [sentimentScore, setSentimentScore] = useState(0)
@@ -37,7 +39,7 @@ export default function SentimentAnalyzer() {
     let totalWordCount = 0
     const newSentimentCounts: Record<string, number> = {}
     const newKeywordTallies: Record<string, Record<string, { count: number; lines: number[] }>> = {}
-    const newOutput: { text: string; lineNumber: number; highlights: any[] }[] = []
+    const newOutput: { text: string; lineNumber: number; highlights: Highlight[] }[] = []
 
     // Initialize counts and tallies
     Object.keys(sentimentCategories).forEach((category) => {
@@ -67,7 +69,7 @@ export default function SentimentAnalyzer() {
         currentParagraphIndex++
       }
 
-      const lineHighlights: any[] = []
+      const lineHighlights: Highlight[] = []
 
       // Process each word
       words.forEach((word, wordIndex) => {
@@ -293,7 +295,7 @@ export default function SentimentAnalyzer() {
                     </CardHeader>
                     <CardContent>
                       <ScrollArea className="h-[200px]">
-                        <HighlightedText lines={output} sentimentCategories={sentimentCategories} />
+                        <HighlightedText lines={output} />
                       </ScrollArea>
                     </CardContent>
                   </Card>
