@@ -13,10 +13,10 @@ import KeywordTally from "@/components/keyword-tally"
 import HighlightedText from "@/components/highlighted-text"
 import ParagraphContext from "@/components/paragraph-context"
 import { defaultSentimentCategories } from "@/lib/sentiment-data"
+import { analyzeSentiment, type Highlight } from "@/lib/analyze-sentiment"
+import BulkDropzone from "@/components/bulk-dropzone"
 import Topper from "@/components/topper"
 import UsageInstructions from "@/components/usage-instructions"
-
-type Highlight = { word: string; index: number; category: string }
 
 export default function SentimentAnalyzer() {
   const [input, setInput] = useState("")
@@ -35,109 +35,17 @@ export default function SentimentAnalyzer() {
   const analyzeText = () => {
     if (!input.trim()) return
 
-    const lines = input.split(/\r?\n/)
-    let totalWordCount = 0
-    const newSentimentCounts: Record<string, number> = {}
-    const newKeywordTallies: Record<string, Record<string, { count: number; lines: number[] }>> = {}
-    const newOutput: { text: string; lineNumber: number; highlights: Highlight[] }[] = []
+    const result = analyzeSentiment(input, sentimentCategories)
 
-    // Initialize counts and tallies
-    Object.keys(sentimentCategories).forEach((category) => {
-      newSentimentCounts[category] = 0
-      newKeywordTallies[category] = {}
-    })
+    setOutput(result.lines)
+    setWordCount(result.wordCount)
+    setCharCount(result.charCount)
+    setSentimentScore(result.sentimentScore)
 
-    // Process paragraphs for context
-    const paragraphs = input.split(/\r?\n\s*\r?\n/).filter((p) => p.trim().length > 0)
-    const paragraphKeywordFound = Array(paragraphs.length).fill(false)
-    let currentParagraphIndex = 0
-    let lineCounterForParagraphs = 0
+    setSentimentCounts(result.sentimentCounts)
+    setKeywordTallies(result.keywordTallies)
+    setParagraphsWithKeywords(result.paragraphsWithKeywords)
 
-    // Process each line
-    lines.forEach((line, lineIndex) => {
-      const lineNumber = lineIndex + 1
-      const words = line.split(/\s+/).filter((word) => word.length > 0)
-      totalWordCount += words.length
-
-      // Track paragraphs
-      if (
-        line.trim() === "" &&
-        lineCounterForParagraphs > 0 &&
-        lines[lineIndex - 1] &&
-        lines[lineIndex - 1].trim() !== ""
-      ) {
-        currentParagraphIndex++
-      }
-
-      const lineHighlights: Highlight[] = []
-
-      // Process each word
-      words.forEach((word, wordIndex) => {
-        const cleanWord = word.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "").toLowerCase()
-
-        // Check against keywords in each category
-        for (const category in sentimentCategories) {
-          const keywords = sentimentCategories[category].split(",").map((k) => k.trim())
-
-          if (keywords.includes(cleanWord)) {
-            newSentimentCounts[category]++
-
-            // Update tally
-            if (!newKeywordTallies[category][cleanWord]) {
-              newKeywordTallies[category][cleanWord] = { count: 0, lines: [] }
-            }
-            newKeywordTallies[category][cleanWord].count++
-            if (!newKeywordTallies[category][cleanWord].lines.includes(lineNumber)) {
-              newKeywordTallies[category][cleanWord].lines.push(lineNumber)
-            }
-
-            // Add highlight
-            lineHighlights.push({
-              word,
-              index: wordIndex,
-              category,
-            })
-
-            // Mark paragraph
-            if (currentParagraphIndex < paragraphs.length) {
-              paragraphKeywordFound[currentParagraphIndex] = true
-            }
-
-            break // Assign to first matching category only
-          }
-        }
-      })
-
-      newOutput.push({
-        text: line,
-        lineNumber,
-        highlights: lineHighlights,
-      })
-
-      // Update line counter for paragraph tracking
-      if (line.trim() !== "") {
-        lineCounterForParagraphs++
-      } else {
-        lineCounterForParagraphs = 0
-      }
-    })
-
-    // Calculate sentiment score
-    let score = 0
-    for (const category in newSentimentCounts) {
-      score += newSentimentCounts[category] * getSentimentScore(category)
-    }
-
-    // Update state
-    setOutput(newOutput)
-    setWordCount(totalWordCount)
-    setCharCount(input.length)
-    setSentimentScore(score)
-    setSentimentCounts(newSentimentCounts)
-    setKeywordTallies(newKeywordTallies)
-    setParagraphsWithKeywords(paragraphs.filter((_, index) => paragraphKeywordFound[index]))
-
-    // Switch to results tab
     setActiveTab("results")
   }
 
@@ -184,33 +92,6 @@ export default function SentimentAnalyzer() {
     }))
   }
 
-  const getSentimentScore = (category: string) => {
-    const scoreMapping: Record<string, number> = {
-      Positive: 1,
-      Negative: -1,
-      Confused: -0.2,
-      Excited: 1,
-      Neutral: 0,
-      Angry: -1,
-      Sad: -1,
-      Fearful: -0.8,
-      Surprised: 0.5,
-      Disgusted: -0.7,
-      Trustful: 1,
-      Anticipative: 0.8,
-      Bored: -0.3,
-      Proud: 1,
-      Hopeful: 0.9,
-      Lonely: -0.5,
-      Relieved: 0.7,
-      Frustrated: -0.6,
-      Enthralled: 0.8,
-      Embarrassed: -0.4,
-      Indignant: -0.7,
-      Content: 0.6,
-    }
-    return scoreMapping[category] || 0
-  }
 
   return (
     <div className="container mx-auto p-4 md:p-6">
@@ -231,6 +112,8 @@ export default function SentimentAnalyzer() {
               onChange={(e) => setInput(e.target.value)}
             />
           </div>
+
+          <BulkDropzone categories={sentimentCategories} />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
             <TabsList className="grid grid-cols-2">
